@@ -95,6 +95,63 @@ int HP_CloseFile(HP_info *header_info)
 
 int HP_InsertEntry(HP_info header_info, Record record)
 {
+  void *block;
+  int no_of_blocks;
+  int no_of_records = 0; 
+
+  if ((no_of_blocks = BF_GetBlockCounter(header_info.fileDesc)) < 0)
+  {
+    BF_PrintError("[!] Error in getting the block counter inside HP_InsertEntry");
+    return -1;
+  }
+  else if (no_of_blocks == 1) 
+  {
+    if (BF_AllocateBlock(header_info.fileDesc) < 0)
+    {
+      BF_PrintError("[!] Error in allocating the block inside HP_InsertEntry (1)");
+      BF_CloseFile(header_info.fileDesc);
+      return -1;
+    }
+
+    no_of_blocks = 2;
+  }
+
+  if (BF_ReadBlock(header_info.fileDesc, no_of_blocks - 1, &block) < 0)
+  {
+    BF_PrintError("[!] Error in getting the block inside HP_InsertEntry");
+    return -1;
+  }
+  memcpy(&no_of_records, block, sizeof(int));
+
+  if (++no_of_records > (int)((BLOCK_SIZE - sizeof(int)) / sizeof(Record))) 
+  {
+    if (BF_AllocateBlock(header_info.fileDesc) < 0)
+    {
+      BF_PrintError("[!] Error in allocating the block inside HP_InsertEntry (2)");
+      BF_CloseFile(header_info.fileDesc);
+      return -1;
+    }
+
+    ++no_of_blocks;
+  }
+
+  if (BF_ReadBlock(header_info.fileDesc, no_of_blocks - 1, &block) < 0)
+  {
+    BF_PrintError("[!] Error in reading the block inside HP_Insertentry");
+    return -1;
+  }
+
+  memcpy(block, &no_of_records, sizeof(int));
+  memcpy(block + sizeof(int) + (no_of_records * sizeof(Record)), &record, sizeof(Record));
+
+  if (BF_WriteBlock(header_info.fileDesc, no_of_blocks - 1) < 0)
+  {
+    BF_PrintError("[!] Error in writing to block inside HP_InsertEntry");
+    BF_CloseFile(header_info.fileDesc);
+    return -1;
+  }
+
+  return 0;
 }
 
 int HP_DeleteEntry(HP_info header_info, void *value)
