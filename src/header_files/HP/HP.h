@@ -5,6 +5,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <assert.h>
+#include <sys/types.h>
 #include "../../../BF_lib/BF.h"
 
 #define TRUE 1
@@ -21,9 +23,9 @@ typedef struct
 typedef struct 
 {
   int fileDesc;
-  char attrType;
-  char *attrName;
-  int attrLength;
+  char attrType; // acts as field key
+  char *attrName; // acts as field key
+  int attrLength; // acts as field key
 } HP_info;
 
 
@@ -33,10 +35,15 @@ HP_info *HP_OpenFile(char *);
 
 int HP_CloseFile(HP_info *);
 
-int HP_InsertEntry(HP_info, Record);
+int HP_InsertEntry(HP_info , Record);
 
-int HP_DeleteEntry(HP_info, void *);
+int HP_DeleteEntry(HP_info , void *);
 
-int HP_GetAllEntries(HP_info, void *);
+int HP_GetAllEntries(HP_info , void *);
+
+/*
+ * Helper function for main.
+*/
+void InsertEntries(HP_info *);
 
 #endif /* HP_H */

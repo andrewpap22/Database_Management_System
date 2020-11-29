@@ -53,7 +53,7 @@ int HP_CreateFile(char *fileName, char attrType, char *attrName, int attrLength)
     return -1;
   }
 
-  return 0; // Everything went smoothly!
+  return (EXIT_SUCCESS); // Everything went smoothly!
 }
 
 HP_info *HP_OpenFile(char *fileName)
@@ -66,14 +66,14 @@ HP_info *HP_OpenFile(char *fileName)
   if ((info->fileDesc = BF_OpenFile(fileName)) < 0)
   {
     BF_PrintError("[!] Error in opening the heap file in HP_OpenFile");
-    exit(1);
+    exit(EXIT_FAILURE);
   }
 
   if (BF_ReadBlock(BF_OpenFile(fileName), 0, &block) < 0)
   {
     BF_PrintError("[!] Error in reading the block in HP_OpenFile");
     BF_CloseFile(info->fileDesc);
-    exit(1);
+    exit(EXIT_FAILURE);
   }
 
   memcpy(info, block, sizeof(HP_info));
@@ -90,7 +90,7 @@ int HP_CloseFile(HP_info *header_info)
   }
   free(header_info);
 
-  return 0;
+  return (EXIT_SUCCESS);
 }
 
 int HP_InsertEntry(HP_info header_info, Record record)
@@ -151,7 +151,7 @@ int HP_InsertEntry(HP_info header_info, Record record)
     return -1;
   }
 
-  return 0;
+  return (EXIT_SUCCESS);
 }
 
 int HP_DeleteEntry(HP_info header_info, void *value)
@@ -160,4 +160,53 @@ int HP_DeleteEntry(HP_info header_info, void *value)
 
 int HP_GetAllEntries(HP_info header_info, void *value)
 {
+  void *block;
+  int no_of_blocks; 
+  Record record; 
+
+  if ((no_of_blocks = BF_GetBlockCounter(header_info.fileDesc)) < 0)
+  {
+    BF_PrintError("[!] error in getting the block counter inside HP_GetAllEntries");
+    return -1;
+  }
+}
+
+/*
+ * Helper function for main.
+*/
+void InsertEntries(HP_info *info)
+{
+  FILE *FP;
+  char *line = NULL;
+  size_t length = 0;
+  ssize_t read; // size type with an error value (-1)
+  FP = stdin;
+  Record record;
+
+  while ((read = getline(&line, &length, FP)) != -1)
+  {
+    line[read - 2] = 0;
+    char *tmp;
+
+    tmp = strtok(line, ",");
+    record.id = atoi(tmp);
+
+    tmp = strtok(NULL, ",");
+    tmp++;
+    tmp[strlen(tmp) - 1] = 0;
+    strncpy(record.name, tmp, sizeof(record.name));
+
+    tmp = strtok(NULL, ",");
+    tmp++;
+    tmp[strlen(tmp) - 1] = 0;
+    strncpy(record.surname, tmp, sizeof(record.surname));
+
+    tmp = strtok(NULL, ",");
+    tmp++;
+    tmp[strlen(tmp) - 1] = 0;
+    strncpy(record.address, tmp, sizeof(record.address));
+
+    assert(!HP_InsertEntry(*info, record));
+  }
+  free(line);
 }
