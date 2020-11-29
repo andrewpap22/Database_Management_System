@@ -83,6 +83,14 @@ HP_info *HP_OpenFile(char *fileName)
 
 int HP_CloseFile(HP_info *header_info)
 {
+  if (BF_CloseFile(header_info->fileDesc) < 0)
+  {
+    BF_PrintError("[!] Error in closing the file in HP_CloseFile");
+    return -1;
+  }
+  free(header_info);
+
+  return 0;
 }
 
 int HP_InsertEntry(HP_info header_info, Record record)
