@@ -1,10 +1,6 @@
 #include "header_files/HP/HP.h"
 
-#define NAME_SIZE 15
-#define SURNAME_SIZE 25
-#define ADDRESS_SIZE 50
-
-#define FILENAME "heapfile"
+#define FILENAME "heap_file"
 
 int main(void)
 {  
@@ -30,7 +26,29 @@ int main(void)
     exit(EXIT_FAILURE);
   }
 
-  InsertEntries(info);
+  // InsertEntries(info);
+
+  while (!feof(stdin))
+  {
+    scanf("%d %s %s %s", &record.id, record.name, record.surname, record.address);
+
+    // insert records
+    if (HP_InsertEntry(*info, record) < 0)
+    {
+      fprintf(stderr, "Error in inserting entry in main.\n");
+      HP_CloseFile(info);
+      exit(EXIT_FAILURE);
+    }
+  }
+
+  // close heapfile
+  if (HP_CloseFile(info) < 0)
+  {
+    fprintf(stderr, "Error in closing heapfile in main");
+    exit(EXIT_FAILURE);
+  }
+
+  // print here...
 
   return (EXIT_SUCCESS); // program terminated successfully.
 }
