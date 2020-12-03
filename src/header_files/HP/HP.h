@@ -7,6 +7,7 @@
 #include <string.h>
 #include <assert.h>
 #include <sys/types.h>
+#include <time.h>
 #include "../../../BF_lib/BF.h"
 
 #define TRUE 1
@@ -37,9 +38,9 @@ int HP_CloseFile(HP_info *);
 
 int HP_InsertEntry(HP_info *, Record);
 
-int HP_DeleteEntry(HP_info , void *);
+int HP_DeleteEntry(HP_info *, void *);
 
-int HP_GetAllEntries(HP_info , void *);
+int HP_GetAllEntries(HP_info *, void *);
 
 /*
  * Helper function for main.

@@ -19,6 +19,9 @@ int main(void)
     exit(EXIT_FAILURE);
   }
 
+  /*
+   * Open Heap File 
+  */
   if ((info = HP_OpenFile(FILENAME)) == NULL)
   {
     fprintf(stderr, "[!] Error in opening the file in main()\n");
@@ -26,29 +29,43 @@ int main(void)
     exit(EXIT_FAILURE);
   }
 
-  // InsertEntries(info);
+  /*
+   * Insert entries.
+  */
+  InsertEntries(info);
 
-  while (!feof(stdin))
+  // while (!feof(stdin))
+  // {
+  //   scanf("%d %s %s %s", &record.id, record.name, record.surname, record.address);
+
+  //   /*
+  //   * Insert entries. 
+  //   */
+  //   if (HP_InsertEntry(info, record) < 0)
+  //   {
+  //     fprintf(stderr, "[!] Error in inserting entry in main.\n");
+  //     HP_CloseFile(info);
+  //     exit(EXIT_FAILURE);
+  //   }
+  // }
+
+  /*
+   * Close heapfile
+  */
+  if (HP_GetAllEntries(info, NULL) < 0)
   {
-    scanf("%d %s %s %s", &record.id, record.name, record.surname, record.address);
-
-    // insert records
-    if (HP_InsertEntry(info, record) < 0)
-    {
-      fprintf(stderr, "Error in inserting entry in main.\n");
-      HP_CloseFile(info);
-      exit(EXIT_FAILURE);
-    }
-  }
-
-  // close heapfile
-  if (HP_CloseFile(info) < 0)
-  {
-    fprintf(stderr, "Error in closing heapfile in main");
+    fprintf(stderr, "[!] Error in getting all the entries in main()\n");
     exit(EXIT_FAILURE);
   }
 
-  // print here...
+  /*
+   * Close heapfile
+  */
+  if (HP_CloseFile(info) < 0)
+  {
+    fprintf(stderr, "[!] Error in closing heapfile in main()\n");
+    exit(EXIT_FAILURE);
+  }
 
   return (EXIT_SUCCESS); // program terminated successfully.
 }
