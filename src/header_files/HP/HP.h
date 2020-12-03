@@ -35,7 +35,7 @@ HP_info *HP_OpenFile(char *);
 
 int HP_CloseFile(HP_info *);
 
-int HP_InsertEntry(HP_info , Record);
+int HP_InsertEntry(HP_info *, Record);
 
 int HP_DeleteEntry(HP_info , void *);
 

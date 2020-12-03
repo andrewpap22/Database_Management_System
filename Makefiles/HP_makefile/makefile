@@ -32,7 +32,7 @@ clean:
 
 # run the program
 run: $(OUT)
-	./$(OUT)
+	./$(OUT) < ../../record_examples/records_test.txt
 
 # < ../../record_examples/records1K.txt	
 

@@ -33,7 +33,7 @@ int main(void)
     scanf("%d %s %s %s", &record.id, record.name, record.surname, record.address);
 
     // insert records
-    if (HP_InsertEntry(*info, record) < 0)
+    if (HP_InsertEntry(info, record) < 0)
     {
       fprintf(stderr, "Error in inserting entry in main.\n");
       HP_CloseFile(info);

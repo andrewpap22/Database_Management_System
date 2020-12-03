@@ -93,30 +93,30 @@ int HP_CloseFile(HP_info *header_info)
   return (EXIT_SUCCESS);
 }
 
-int HP_InsertEntry(HP_info header_info, Record record)
+int HP_InsertEntry(HP_info *header_info, Record record)
 {
   void *block;
   int no_of_blocks;
   int no_of_records = 0; 
 
-  if ((no_of_blocks = BF_GetBlockCounter(header_info.fileDesc)) < 0)
+  if ((no_of_blocks = BF_GetBlockCounter(header_info->fileDesc)) < 0)
   {
     BF_PrintError("[!] Error in getting the block counter inside HP_InsertEntry");
     return -1;
   }
   else if (no_of_blocks == 1) 
   {
-    if (BF_AllocateBlock(header_info.fileDesc) < 0)
+    if (BF_AllocateBlock(header_info->fileDesc) < 0)
     {
       BF_PrintError("[!] Error in allocating the block inside HP_InsertEntry (1)");
-      BF_CloseFile(header_info.fileDesc);
+      BF_CloseFile(header_info->fileDesc);
       return -1;
     }
 
     no_of_blocks = 2;
   }
 
-  if (BF_ReadBlock(header_info.fileDesc, no_of_blocks - 1, &block) < 0)
+  if (BF_ReadBlock(header_info->fileDesc, no_of_blocks - 1, &block) < 0)
   {
     BF_PrintError("[!] Error in getting the block inside HP_InsertEntry");
     return -1;
@@ -125,17 +125,17 @@ int HP_InsertEntry(HP_info header_info, Record record)
 
   if (++no_of_records > (int)((BLOCK_SIZE - sizeof(int)) / sizeof(Record))) 
   {
-    if (BF_AllocateBlock(header_info.fileDesc) < 0)
+    if (BF_AllocateBlock(header_info->fileDesc) < 0)
     {
       BF_PrintError("[!] Error in allocating the block inside HP_InsertEntry (2)");
-      BF_CloseFile(header_info.fileDesc);
+      BF_CloseFile(header_info->fileDesc);
       return -1;
     }
 
     ++no_of_blocks;
   }
 
-  if (BF_ReadBlock(header_info.fileDesc, no_of_blocks - 1, &block) < 0)
+  if (BF_ReadBlock(header_info->fileDesc, no_of_blocks - 1, &block) < 0)
   {
     BF_PrintError("[!] Error in reading the block inside HP_Insertentry");
     return -1;
@@ -144,10 +144,10 @@ int HP_InsertEntry(HP_info header_info, Record record)
   memcpy(block, &no_of_records, sizeof(int));
   memcpy(block + sizeof(int) + (no_of_records * sizeof(Record)), &record, sizeof(Record));
 
-  if (BF_WriteBlock(header_info.fileDesc, no_of_blocks - 1) < 0)
+  if (BF_WriteBlock(header_info->fileDesc, no_of_blocks - 1) < 0)
   {
     BF_PrintError("[!] Error in writing to block inside HP_InsertEntry");
-    BF_CloseFile(header_info.fileDesc);
+    BF_CloseFile(header_info->fileDesc);
     return -1;
   }
 
@@ -169,44 +169,46 @@ int HP_GetAllEntries(HP_info header_info, void *value)
     BF_PrintError("[!] error in getting the block counter inside HP_GetAllEntries");
     return -1;
   }
+
+
 }
 
 /*
  * Helper function for main.
 */
-void InsertEntries(HP_info *info)
-{
-  FILE *FP;
-  char *line = NULL;
-  size_t length = 0;
-  ssize_t read; // size type with an error value (-1)
-  FP = stdin;
-  Record record;
+// void InsertEntries(HP_info *info)
+// {
+//   FILE *FP;
+//   char *line = NULL;
+//   size_t length = 0;
+//   ssize_t read; // size type with an error value (-1)
+//   FP = stdin;
+//   Record record;
 
-  while ((read = getline(&line, &length, FP)) != -1)
-  {
-    line[read - 2] = 0;
-    char *tmp;
+//   while ((read = getline(&line, &length, FP)) != -1)
+//   {
+//     line[read - 2] = 0;
+//     char *tmp;
 
-    tmp = strtok(line, ",");
-    record.id = atoi(tmp);
+//     tmp = strtok(line, ",");
+//     record.id = atoi(tmp);
 
-    tmp = strtok(NULL, ",");
-    tmp++;
-    tmp[strlen(tmp) - 1] = 0;
-    strncpy(record.name, tmp, sizeof(record.name));
+//     tmp = strtok(NULL, ",");
+//     tmp++;
+//     tmp[strlen(tmp) - 1] = 0;
+//     strncpy(record.name, tmp, sizeof(record.name));
 
-    tmp = strtok(NULL, ",");
-    tmp++;
-    tmp[strlen(tmp) - 1] = 0;
-    strncpy(record.surname, tmp, sizeof(record.surname));
+//     tmp = strtok(NULL, ",");
+//     tmp++;
+//     tmp[strlen(tmp) - 1] = 0;
+//     strncpy(record.surname, tmp, sizeof(record.surname));
 
-    tmp = strtok(NULL, ",");
-    tmp++;
-    tmp[strlen(tmp) - 1] = 0;
-    strncpy(record.address, tmp, sizeof(record.address));
+//     tmp = strtok(NULL, ",");
+//     tmp++;
+//     tmp[strlen(tmp) - 1] = 0;
+//     strncpy(record.address, tmp, sizeof(record.address));
 
-    assert(!HP_InsertEntry(*info, record));
-  }
-  free(line);
-}
+//     assert(!HP_InsertEntry(*info, record));
+//   }
+//   free(line);
+// }
