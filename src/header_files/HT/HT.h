@@ -14,7 +14,7 @@ typedef struct
 
 typedef struct
 {
-  char *fileName;
+  int fileDesc;
   char attrType;
   char *attrName;
   int attrLength;
@@ -37,5 +37,6 @@ int HT_CloseIndex(HT_info *);
 int HT_InsertEntry(HT_info *, Record);
 int HT_DeleteEntry(HT_info , void *);
 int HT_GetAllEntries(HT_info , void *);
+void InsertEntries(HT_info *);
 
 #endif /* HT_H */

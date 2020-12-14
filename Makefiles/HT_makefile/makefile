@@ -8,7 +8,7 @@ SOURCE	= ../../src/main_HT.c ../../src/dotC_files/HT/HT.c
 HEADER	= ../../src/header_files/HT/HT.h
 OUT	= hashfile
 CC	 = gcc
-FLAGS	 = -g3 -c -Wall 
+FLAGS	 = -g3 -c -Wall
 LFLAGS	 = ../../BF_lib/BF_64.a -no-pie
 # -g option enables debugging mode 
 # -c flag generates object code for separate files
@@ -32,7 +32,7 @@ clean:
 
 # run the program
 run: $(OUT)
-	./$(OUT)
+	./$(OUT) < ../../record_examples/records1K.txt
 
 # compile program with debugging information
 debug: $(OUT)
