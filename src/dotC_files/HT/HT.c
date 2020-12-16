@@ -424,6 +424,71 @@ int HashStatistics(char *filename)
     
 }
 
+int HT_DeleteEntry(HT_info info, void *value)
+{
+    int key = hashfunction(info.attrType, info.buckets, value);
+
+    void* page;
+    Block block;
+
+    if (BF_ReadBlock(info.fileDesc, key, &page) < 0)   //first page for this key
+    {
+        BF_PrintError("[!] Error in reading the block in HT_CreateFile");
+        BF_CloseFile(info.fileDesc);
+        return -1;
+    }
+
+    memcpy(&block, page, sizeof(Block));
+
+    int i = 0;
+    while(block.records[i] != NULL)
+    {
+        Record currRecord = block.records[i];
+        if(currRecord.id == (int)value || curr.Record.id == (char)value)
+        {
+            //delete item from array
+            return 0;
+        }
+
+        i++;
+    }
+
+    //if this place is reached then the item is not found yet
+
+    if(block.nextBlock != -1)   //there are more pages for this key
+    {
+        while(block.nextBlock != -1)  //until the last linked page
+        {
+            if (BF_ReadBlock(info.fileDesc, block.nextBlock, &page) < 0)
+            {
+                BF_PrintError("[!] Error in reading the block in HT_CreateFile");
+                BF_CloseFile(info.fileDesc);
+                return -1;
+            }
+
+            memcpy(&block, page, sizeof(Block));
+
+            i = 0;
+            while(block.records[i] != NULL)
+            {
+                currRecord = block.records[i];
+                if(currRecord.id == (int)value || curr.Record.id == (char)value)
+                {
+                    //delete item from array
+                    return 0;
+                }
+
+                i++;
+            }
+
+        }
+    }
+
+    //if this place is reached then the item does not exist
+    printf("Item to be deleted does not exist\n");
+    return 0;
+}
+
 
 void InsertEntries(HT_info *info)
 {
