@@ -32,7 +32,7 @@ clean:
 
 # run the program
 run: $(OUT)
-	./$(OUT) < ../../record_examples/records_test.txt
+	./$(OUT) < ../../record_examples/records1K.txt
 
 # compile program with debugging information
 debug: $(OUT)
