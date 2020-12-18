@@ -1,6 +1,6 @@
 #include "header_files/HT/HT.h"
 
-#define FILENAME "hash_file"
+#define FILENAME "hash_file.txt"
 
 int main(void)
 {
@@ -23,7 +23,7 @@ int main(void)
 
     InsertEntries(info);
 
-    int value = 3;
+    int value = 4;
     int blocks_read;
     if ((blocks_read = HT_GetAllEntries(*info, &value)) < 0)
     {
@@ -33,11 +33,14 @@ int main(void)
 
     printf("Blocks read = %d\n", blocks_read);
 
+
     if (HT_CloseIndex(info) < 0)
     {
         fprintf(stderr, "[!] Error in closing hashfile in main()\n");
         return -1;
     }
+
+    HashStatistics(FILENAME);
 
     return 0; // program terminated successfully.
 }

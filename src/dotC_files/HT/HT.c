@@ -14,11 +14,7 @@ int HT_CreateIndex(char *fileName, char attrType, char *attrName, int attrLength
     info.attrName = attrName;
     info.attrType = attrType;
     info.buckets = buckets;
-
-//    first_block->maxRecords = 512 / (  sizeof(Record) - 2*sizeof(char) - sizeof(int) );
-//    first_block->currRecords = 0;
-//    first_block->nextBlock = 1;
-
+    
     if (BF_CreateFile(fileName) < 0)
     {
         BF_PrintError("[!] Error in creating the file in HT_CreateFile");
@@ -325,169 +321,180 @@ int HT_GetAllEntries(HT_info info, void *value)
     return blocks_read;
 }
 
-//int HashStatistics(char *filename)
-//{
-//    HT_info *info;
-//    void *first_block;
-//
-//    if ((info.fileDesc = BF_OpenFile(fileName)) < 0)
-//    {
-//        BF_PrintError("[!] Error in opening the file in HT_CreateFile");
-//        return -1;
-//    }
-//    if (BF_ReadBlock(BF_OpenFile(fileName), 0, &block) < 0)
-//    {
-//        BF_PrintError("[!] Error in reading the block in HT_OpenFile");
-//        BF_CloseFile(info->fileDesc);
-//        return -1;
-//    }
-//
-//    memcpy(info, first_block, sizeof(HT_info));
-//
-//    int num_blocks=0; //holds the number of blocks of the file;
-//    int min_records;
-//    int max_records;
-//    int average_records;
-//    int overload_buckets=0;
-//    int overload[info->buckets] = 0;
-//
-//    for(int i = 1; i <= info.buckets; i++)   //for each bucket
-//    {
-//        Block block;
-//        void* page;
-//
-//        if (BF_ReadBlock(info.fileDesc, i, &page) < 0)
-//        {
-//            BF_PrintError("[!] Error in reading the block in HT_CreateFile");
-//            BF_CloseFile(info.fileDesc);
-//            return -1;
-//        }
-//
-//        num_blocks++;
-//
-//        memcpy(&block, page, sizeof(Block));
-//
-//        min_records = block.currRecords;
-//        max_records = block.currRecords;
-//        average_records = block.currRecords;
-//        int j=1;
-//
-//        while(block.nextBlock != -1)  //more blocks linked
-//        {
-//            overload_buckets++;
-//            j++; //holds the number of blocks per bucket;
-//
-//            if (BF_ReadBlock(info.fileDesc, block.nextBlock, &page) < 0)
-//            {
-//                BF_PrintError("[!] Error in reading the block in HT_CreateFile");
-//                BF_CloseFile(info.fileDesc);
-//                return -1;
-//            }
-//
-//            num_blocks++;
-//
-//            memcpy(&block, page, sizeof(Block));
-//
-//            if(block.currRecords > max_records)
-//            {
-//                max_records = block.currRecords;
-//            }
-//            else if(block.currRecords < min_records)
-//            {
-//                min_records = block.currRecords;
-//            }
-//
-//            average_records += block.currRecords;
-//        }
-//
-//        overload[i-1] = overload_buckets;
-//
-//        average_records = average_records/j;
-//
-//        printf("Bucket number %d has max number of records = %d, min number of records = %d and an average number of %d records\n", i, max_records, min_records, average_records);
-//
-//    }
-//
-//    printf("File %s has %d blocks\n", filename, num_blocks);
-//
-//    int average_blocks = num_blocks/info.buckets;
-//    printf("The average number of blocks is %d\n", average_blocks);
-//
-//    printf("There are %d overload buckets:\n", overload_buckets);
-//    for(int k=0; k < info->buckets; k++)
-//    {
-//        if(overload[k] != 0)
-//        {
-//            printf("bucket number %d has %d blocks\n", k+1, overload[k]);
-//        }
-//    }
-//
-//}
+int HashStatistics(char *fileName)
+{
+    HT_info *info;
+    void *first_block;
 
-//int HT_DeleteEntry(HT_info info, void *value)
-//{
-//    int key = hashfunction(info.attrType, info.buckets, value);
-//
-//    void* page;
-//    Block block;
-//
-//    if (BF_ReadBlock(info.fileDesc, key, &page) < 0)   //first page for this key
-//    {
-//        BF_PrintError("[!] Error in reading the block in HT_CreateFile");
-//        BF_CloseFile(info.fileDesc);
-//        return -1;
-//    }
-//
-//    memcpy(&block, page, sizeof(Block));
-//
-//    int i = 0;
-//    while(block.records[i] != NULL)
-//    {
-//        Record currRecord = block.records[i];
-//        if(currRecord.id == (int)value || curr.Record.id == (char)value)
-//        {
-//            //delete item from array
-//            return 0;
-//        }
-//
-//        i++;
-//    }
-//
-//    //if this place is reached then the item is not found yet
-//
-//    if(block.nextBlock != -1)   //there are more pages for this key
-//    {
-//        while(block.nextBlock != -1)  //until the last linked page
-//        {
-//            if (BF_ReadBlock(info.fileDesc, block.nextBlock, &page) < 0)
-//            {
-//                BF_PrintError("[!] Error in reading the block in HT_CreateFile");
-//                BF_CloseFile(info.fileDesc);
-//                return -1;
-//            }
-//
-//            memcpy(&block, page, sizeof(Block));
-//
-//            i = 0;
-//            while(block.records[i] != NULL)
-//            {
-//                currRecord = block.records[i];
-//                if(currRecord.id == (int)value || curr.Record.id == (char)value)
-//                {
-//                    //delete item from array
-//                    return 0;
-//                }
-//
-//                i++;
-//            }
-//
-//        }
-//    }
-//
-//    //if this place is reached then the item does not exist
-//    printf("Item to be deleted does not exist\n");
-//    return 0;
-//}
+    if ((info = HT_OpenIndex(fileName)) == NULL)
+    {
+        fprintf(stderr, "[!] Error in opening hash_file in main()\n");
+        HT_CloseIndex(info);
+        return -1;
+    }
+    if (BF_ReadBlock(info->fileDesc, 0, &first_block) < 0)
+    {
+        BF_PrintError("[!] Error in reading the block in HT_OpenFile");
+        BF_CloseFile(info->fileDesc);
+        return -1;
+    }
+
+    memcpy(info, first_block, sizeof(HT_info));
+
+    int num_blocks=0; //holds the number of blocks of the file;
+    int min_records;
+    int max_records;
+    int average_records;
+    int overload_buckets=0;
+    int overload[info->buckets];
+    memset(overload, 0, info->buckets);
+
+    for(int i = 1; i <= info->buckets; i++)   //for each bucket
+    {
+        Block block;
+        void* page;
+
+        if (BF_ReadBlock(info->fileDesc, i, &page) < 0)
+        {
+            BF_PrintError("[!] Error in reading the block in HT_CreateFile");
+            BF_CloseFile(info->fileDesc);
+            return -1;
+        }
+
+        num_blocks++;
+
+        memcpy(&block, page, sizeof(Block));
+
+        min_records = block.currRecords;
+        max_records = block.currRecords;
+        average_records = block.currRecords;
+        int j=1;
+
+        while(block.nextBlock != -1)  //more blocks linked
+        {
+            overload_buckets++;
+            j++; //holds the number of blocks per bucket;
+
+            if (BF_ReadBlock(info->fileDesc, block.nextBlock, &page) < 0)
+            {
+                BF_PrintError("[!] Error in reading the block in HT_CreateFile");
+                BF_CloseFile(info->fileDesc);
+                return -1;
+            }
+
+            num_blocks++;
+
+            memcpy(&block, page, sizeof(Block));
+
+            if(block.currRecords > max_records)
+            {
+                max_records = block.currRecords;
+            }
+            else if(block.currRecords < min_records)
+            {
+                min_records = block.currRecords;
+            }
+
+            average_records += block.currRecords;
+        }
+
+        overload[i-1] = overload_buckets;
+
+        average_records = average_records/j;
+
+        printf("Bucket number %d has max number of records = %d, min number of records = %d and an average number of %d records\n", i, max_records, min_records, average_records);
+    }
+
+    printf("File %s has %d blocks\n", fileName, num_blocks);
+
+    int average_blocks = num_blocks/info->buckets;
+    printf("The average number of blocks is %d\n", average_blocks);
+
+    printf("There are %d overload buckets:\n", overload_buckets);
+    for(int k=0; k < info->buckets; k++)
+    {
+        if(overload[k] != 0)
+        {
+            printf("bucket number %d has %d blocks\n", k+1, overload[k]);
+        }
+    }
+
+    if (HT_CloseIndex(info) < 0)
+    {
+        fprintf(stderr, "[!] Error in closing hashfile in main()\n");
+        return -1;
+    }
+
+    return 0;
+}
+
+int HT_DeleteEntry(HT_info info, void *value)
+{
+    int key = hashfunction(info.attrType, info.buckets, &value);
+
+    void* page;
+    Block block;
+    Record currRecord;
+
+    if (BF_ReadBlock(info.fileDesc, key, &page) < 0)   //first page for this key
+    {
+        BF_PrintError("[!] Error in reading the block in HT_CreateFile");
+        BF_CloseFile(info.fileDesc);
+        return -1;
+    }
+
+    memcpy(&block, page, sizeof(Block));
+
+    int i = 0;
+    while(i <= block.currRecords)
+    {
+        currRecord = block.records[i];
+        if(currRecord.id == (int)value || currRecord.id == (char)value)
+        {
+            memset(&block.records[i], 0, sizeof(Record));  //delete item from array
+//            block.currRecords--;
+            return 0;
+        }
+
+        i++;
+    }
+
+    //if this place is reached then the item is not found yet
+
+    if(block.nextBlock != -1)   //there are more pages for this key
+    {
+        while(block.nextBlock != -1)  //until the last linked page
+        {
+            if (BF_ReadBlock(info.fileDesc, block.nextBlock, &page) < 0)
+            {
+                BF_PrintError("[!] Error in reading the block in HT_CreateFile");
+                BF_CloseFile(info.fileDesc);
+                return -1;
+            }
+
+            memcpy(&block, page, sizeof(Block));
+
+            i = 0;
+            while(i <= block.currRecords)
+            {
+                currRecord = block.records[i];
+                if(currRecord.id == (int)value || currRecord.id == (char)value)
+                {
+                    memset(&block.records[i], 0, sizeof(Record));   //delete item from array
+//                    block.currRecords--;
+                    return 0;
+                }
+
+                i++;
+            }
+
+        }
+    }
+
+    //if this place is reached then the item does not exist
+    printf("Item to be deleted does not exist\n");
+    return 0;
+}
 
 
 void InsertEntries(HT_info *info)
@@ -507,26 +514,21 @@ void InsertEntries(HT_info *info)
 
         tmp = strtok(line, ",");
         record.id = atoi(tmp);
-        printf("id = %d \n", record.id);
 
         tmp = strtok(NULL, ",");
         tmp++;
         tmp[strlen(tmp) - 1] = '\0';
         strncpy(record.name, tmp, sizeof(record.name));
-        printf("name = %s \n", record.name);
 
         tmp = strtok(NULL, ",");
         tmp++;
         tmp[strlen(tmp) - 1] = '\0';
         strncpy(record.surname, tmp, sizeof(record.surname));
-        printf("sname = %s \n", record.surname);
-
 
         tmp = strtok(NULL, ",");
         tmp++;
         tmp[strlen(tmp) - 1] = '\0';
         strncpy(record.address, tmp, sizeof(record.address));
-        printf("addr = %s \n", record.address);
 
         line--;
 
