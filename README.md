@@ -6,6 +6,8 @@
 
 ### 📁 Project File Structure
 
+> [!] `Important` This one is the old file structure. It needs to be updated to match the current new one!
+
 <ul>
   <li>
     <a href="https://github.com/andrewpap22/Database_Management_System/tree/master/BF_lib">📂 BF_lib</a>
@@ -31,13 +33,17 @@
 <hr>
 
 ### Compilation: 
-```
+> Go inside the Makefiles Directory and then for each of the HT or HP compile with: 
+
+```bash
 $ make
-``` 
+```
 
 ### Execution:
-```
-$ ./project1  
+> Go inside the Makefiles Directory and then for each of the HT or HP run with:
+
+```bash
+$ make run  
 ```
 
 To delete binary files: 
