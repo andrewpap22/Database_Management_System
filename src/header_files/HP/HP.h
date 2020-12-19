@@ -29,6 +29,14 @@ typedef struct
   int attrLength; // acts as field key
 } HP_info;
 
+typedef struct
+{
+  char maxRecords;   //char instead of int to save space
+  int nextBlock;    //fileDescriptor
+  char currRecords;
+  Record records[ 512 / (  sizeof(Record) - 2*sizeof(char) - sizeof(int) ) ];
+}Block;
+
 
 int HP_CreateFile(char *, char, char *, int);
 

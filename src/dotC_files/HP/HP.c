@@ -96,59 +96,90 @@ int HP_CloseFile(HP_info *header_info)
 int HP_InsertEntry(HP_info *header_info, Record record)
 {
   void *block;
-  int no_of_blocks;
-  int no_of_records = 0;
+  int total_records;
+  int records;
+  int counter;
 
-  if ((no_of_blocks = BF_GetBlockCounter(header_info->fileDesc)) < 0)
+  if (BF_ReadBlock(header_info->fileDesc, 0, &block) < 0)
   {
-    BF_PrintError("[!] Error in getting the block counter inside HP_InsertEntry");
+    BF_PrintError("[!] Error in reading block in HP_InsertEntry (1).");
     return -1;
   }
-  else if (no_of_blocks == 1)
+
+  memcpy(&total_records, block + sizeof(int), sizeof(int));
+
+  if (total_records == 0)
   {
     if (BF_AllocateBlock(header_info->fileDesc) < 0)
     {
-      BF_PrintError("[!] Error in allocating the block inside HP_InsertEntry (1)");
-      BF_CloseFile(header_info->fileDesc);
+      BF_PrintError("[!] Error in allocating block inside HP_InsertEntry (1).");
       return -1;
     }
 
-    no_of_blocks = 2;
-  }
-
-  if (BF_ReadBlock(header_info->fileDesc, no_of_blocks - 1, &block) < 0)
-  {
-    BF_PrintError("[!] Error in getting the block inside HP_InsertEntry");
-    return -1;
-  }
-  memcpy(&no_of_records, block, sizeof(int));
-
-  if (++no_of_records > (int)((BLOCK_SIZE - sizeof(int)) / sizeof(Record)))
-  {
-    if (BF_AllocateBlock(header_info->fileDesc) < 0)
+    if (BF_ReadBlock(header_info->fileDesc, 1, &block) < 0)
     {
-      BF_PrintError("[!] Error in allocating the block inside HP_InsertEntry (2)");
-      BF_CloseFile(header_info->fileDesc);
+      BF_PrintError("[!] Error in reading block inside HP_InsertEntry (2).");
+      return -1;
+    }
+  }
+  else
+  {
+    records = total_records % ((BLOCK_SIZE - sizeof(int)) / (sizeof(Record)));
+
+    if (records == 0)
+    {
+      if (BF_AllocateBlock(header_info->fileDesc) < 0)
+      {
+        BF_PrintError("[!] Error in allocating block inside HP_InsertEntry (2).");
+        return -1;
+      }
+
+      if (BF_ReadBlock(header_info->fileDesc, (BF_GetBlockCounter(header_info->fileDesc) - 1), &block) < 0)
+      {
+        BF_PrintError("[!] Error in getting block counter inside HP_InsertEntry!");
+        return -1;
+      }
+
+      counter = 1;
+
+      memcpy(block, &counter, sizeof(int));
+      memcpy((block + sizeof(int)), &record, sizeof(Record));
+    }
+    else
+    {
+      if (BF_ReadBlock(header_info->fileDesc, (BF_GetBlockCounter(header_info->fileDesc) - 1), &block) < 0)
+      {
+        BF_PrintError("[!] Error in getting block counter inside HP_InsertEntry! (2)");
+        return -1;
+      }
+
+      memcpy((block + sizeof(int) + (records * sizeof(Record))), &record, sizeof(Record));
+      records++;
+      counter = records;
+      memcpy(block, &counter, sizeof(int));
+    }
+
+    if (BF_ReadBlock(header_info->fileDesc, 0, &block) < 0)
+    {
+      BF_PrintError("[!] Error in reading block inside HP_InsertEntry (3).");
       return -1;
     }
 
-    ++no_of_blocks;
-  }
+    total_records++;
 
-  if (BF_ReadBlock(header_info->fileDesc, no_of_blocks - 1, &block) < 0)
-  {
-    BF_PrintError("[!] Error in reading the block inside HP_Insertentry");
-    return -1;
-  }
+    memcpy(block + sizeof(int), &total_records, sizeof(int));
 
-  memcpy(block, &no_of_records, sizeof(int));
-  memcpy(block + sizeof(int) + (no_of_records * sizeof(Record)), &record, sizeof(Record));
+    if (BF_WriteBlock(header_info->fileDesc, 0) < 0)
+    {
+      BF_PrintError("[!] Error in writing to block inside HP_InsertEntry (1).");
+      return -1;
+    }
 
-  if (BF_WriteBlock(header_info->fileDesc, no_of_blocks - 1) < 0)
-  {
-    BF_PrintError("[!] Error in writing to block inside HP_InsertEntry");
-    BF_CloseFile(header_info->fileDesc);
-    return -1;
+    if (BF_WriteBlock(header_info->fileDesc, (BF_GetBlockCounter(header_info->fileDesc) - 1)) < 0)
+    {
+      BF_PrintError("[!] Error in writing to block inside HP_InsertEntry (2).");
+      return -1;
+    }
   }
 
   return (EXIT_SUCCESS);
@@ -161,53 +192,111 @@ int HP_DeleteEntry(HP_info *header_info, void *value)
 int HP_GetAllEntries(HP_info *header_info, void *value)
 {
   void *block;
+  int total_records;
+  int total_blocks;
+  int rpb; // read per block
+  int blocks_read = 0;
+  int records_read = 0;
+  int found = 0;
+  clock_t begin, end;
+  double time_spent;
   Record record;
-  int no_of_blocks, no_of_records;
-  int found = FALSE;
-  clock_t start, end;
 
-  if ((no_of_blocks = BF_GetBlockCounter(header_info->fileDesc)) < 0)
+  if (BF_ReadBlock(header_info->fileDesc, 0, &block) < 0)
   {
-    BF_PrintError("[!] error in getting the block counter inside HP_GetAllEntries");
+    BF_PrintError("[!] Error in reading block in HP_GetAllEntries.");
     return -1;
   }
 
+  memcpy(&total_records, (block + sizeof(int)), sizeof(int));
+
+  if ((total_blocks = BF_GetBlockCounter(header_info->fileDesc)) < 0)
+  {
+    BF_PrintError("[!] Error in getting block counter inside HP_GetAllEntries!");
+    return -1;
+  }
+
+  printf("\nTotal records: %d - Total blocks: %d\n", total_records, (total_blocks - 1));
+
+  if (total_records == 0)
+  {
+    printf("The file has not any records yet...\n Please insert some records and try again [1]\n");
+    return -1;
+  }
+
+  printf("\n |  ID  |      NAME      |       SURNAME       |   ADDRESS            |\n");
+
   if (value == NULL)
   {
-    start = clock();
-    for (int i = 1; i < no_of_blocks; i++)
+    begin = clock();
+
+    for (int i = 1; i < total_blocks; i++)
     {
       if (BF_ReadBlock(header_info->fileDesc, i, &block) < 0)
       {
-        BF_PrintError("[!] Error in reading block inside HP_GetAllEntries.");
+        BF_PrintError("[!] Error in reading block inside HP_GetAllEntries (2).");
         return -1;
       }
-      // reading the number of records per block.
-      memcpy(&no_of_records, block, sizeof(int));
-      for (int j = 1; j <= no_of_records; j++)
-      {
-        // reading the records one by one
-        memcpy(&record, block + sizeof(int) + (j * sizeof(Record)), sizeof(Record));
 
-        printf("%d,\n%s,\n%s,\n%s\n\n", record.id, record.name, record.surname, record.address);
-        printf("%d blocks were read...\n",i);
+      memcpy(&rpb, block, sizeof(int));
 
-        found = TRUE;
-      }
-      if (found == TRUE)
+      for (int j = 0; j < rpb; j++)
       {
-        break;
+        // read records one by one.
+        memcpy(&record, (block + sizeof(int) + (j * sizeof(Record))), sizeof(Record));
+        records_read++;
+
+        printf(" |%6d|%16s|%21s|%22s|\n", record.id, record.name, record.surname, record.address);
+
+        found++;
       }
+      blocks_read++;
     }
     end = clock();
-    double time_spent = (double)(end - start) / CLOCKS_PER_SEC;
-
-    printf("Total time spent: %lf\n", time_spent);
+    time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
   }
-  // else
-  // {
+  else
+  {
+    begin = clock();
+    for (int i = 1; i < total_blocks; i++)
+    {
+      if (BF_ReadBlock(header_info->fileDesc, i, &block) < 0)
+      {
+        BF_PrintError("[!] Error in reading block inside HP_GetAllEntries (3).");
+        return -1;
+      }
 
-  // }
+      memcpy(&rpb, block, sizeof(int));
+
+      for (int j = 0; j < rpb; j++)
+      {
+        memcpy(&record, (block + sizeof(int) + (j * sizeof(Record))), sizeof(Record));
+        records_read++;
+
+        // check if there exists a record based on the field keys.
+        if ((record.id == *(int *)value) || (!strcmp(record.name, value)) || (!strcmp(record.surname, value)) || (!strcmp(record.address, value)))
+        {
+          printf(" |%6d|%16s|%21s|%22s|\n", record.id, record.name, record.surname, record.address);
+
+          found++;
+        }
+      }
+      blocks_read++;
+    }
+    end = clock();
+    time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
+
+    if (found == 0)
+    {
+      printf("There are no results with this value. \n Please try again.\n");
+    }
+  }
+  printf("\n\n					***********HEAP/READ STATISTICS************\n");
+  printf("					*                                         *\n");
+  printf("					* | Records |  Blocks |   Time  | Found  |*\n");
+  printf("					* |%9d|%9d|%9f|%8d|*\n", records_read, blocks_read, time_spent, found);
+  printf("					*                                         *\n");
+  printf("					*******************************************\n\n");
   return 0;
 }
 
@@ -233,19 +322,19 @@ void InsertEntries(HP_info *info)
 
     tmp = strtok(NULL, ",");
     tmp++;
-    tmp[strlen(tmp) - 1] = 0;
+    tmp[strlen(tmp) - 1] = '\0';
     strncpy(record.name, tmp, sizeof(record.name));
 
     tmp = strtok(NULL, ",");
     tmp++;
-    tmp[strlen(tmp) - 1] = 0;
+    tmp[strlen(tmp) - 1] = '\0';
     strncpy(record.surname, tmp, sizeof(record.surname));
 
     tmp = strtok(NULL, ",");
     tmp++;
-    tmp[strlen(tmp) - 1] = 0;
+    tmp[strlen(tmp) - 1] = '\0';
     strncpy(record.address, tmp, sizeof(record.address));
-
+    
     assert(!HP_InsertEntry(info, record));
   }
   free(line);

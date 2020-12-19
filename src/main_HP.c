@@ -50,9 +50,21 @@ int main(void)
   // }
 
   /*
-   * Close heapfile
+   * Print Entries.
   */
   if (HP_GetAllEntries(info, NULL) < 0)
+  {
+    fprintf(stderr, "[!] Error in getting all the entries in main()\n");
+    exit(EXIT_FAILURE);
+  }
+
+  /*
+   * Search and print specific entry
+  */
+  int id = 22;
+
+  printf("\nSearching the record with id = 22 ...\n");
+  if (HP_GetAllEntries(info, &id) < 0)
   {
     fprintf(stderr, "[!] Error in getting all the entries in main()\n");
     exit(EXIT_FAILURE);
