@@ -96,8 +96,8 @@ int HP_CloseFile(HP_info *header_info)
 int HP_InsertEntry(HP_info *header_info, Record record)
 {
   void *block;
-  int total_records;
-  int records;
+  int total_records = 0;
+  int records = 0;
   int counter;
 
   if (BF_ReadBlock(header_info->fileDesc, 0, &block) < 0)
@@ -187,6 +187,64 @@ int HP_InsertEntry(HP_info *header_info, Record record)
 
 int HP_DeleteEntry(HP_info *header_info, void *value)
 {
+  void *block;
+  int total_records;
+  int total_blocks;
+  int rpb;
+  Record record;
+
+  if (BF_ReadBlock(header_info->fileDesc, 0, &block) < 0)
+  {
+    BF_PrintError("[!] Error in reading block in HP_DeleteEntry (1).");
+    return -1;
+  }
+
+  memcpy(&total_records, (block + sizeof(int)), sizeof(int));
+
+  if ((total_blocks = BF_GetBlockCounter(header_info->fileDesc)) < 0)
+  {
+    BF_PrintError("[!] Error in getting block counter inside HP_DeleteEntry!");
+    return -1;
+  }
+
+  printf("\nTotal records: %d - Total blocks: %d\n", total_records, (total_blocks - 1));
+
+  if (total_records == 0)
+  {
+    printf("[!] Error, the file has not any records yet...\n Please insert some records and try again [1]\n");
+    return -1;
+  }
+
+  if (value != NULL)
+  {
+    for (int i = 1; i < total_blocks; i++)
+    {
+      if (BF_ReadBlock(header_info->fileDesc, i, &block) < 0)
+      {
+        BF_PrintError("[!] Error in reading block inside HP_DeleteEntry (2).");
+        return -1;
+      }
+
+      memcpy(&rpb, block, sizeof(int));
+
+      for (int j = 0; j < rpb; j++)
+      {
+        memcpy(&record, (block + sizeof(int) + (j * sizeof(Record))), sizeof(Record));
+
+        // check if there exists a record based on the field keys.
+        if ((record.id == *(int *)value) || (!strcmp(record.name, value)) || (!strcmp(record.surname, value)) || (!strcmp(record.address, value)))
+        {
+          // if the entry with the given value exists, then delete it.
+          memset(&record, 0, sizeof(Record));
+          return 0;
+        }
+      }
+    }
+  }
+
+  //if this place is reached then the item does not exist
+  printf("[!] Item to be deleted does not exist.\n");
+  return 0;
 }
 
 int HP_GetAllEntries(HP_info *header_info, void *value)
@@ -334,7 +392,7 @@ void InsertEntries(HP_info *info)
     tmp++;
     tmp[strlen(tmp) - 1] = '\0';
     strncpy(record.address, tmp, sizeof(record.address));
-    
+
     assert(!HP_InsertEntry(info, record));
   }
   free(line);

@@ -3,6 +3,7 @@
 
 /* includes needed... */
 #include <stdio.h>
+#include <sys/types.h>
 
 typedef struct
 {

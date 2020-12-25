@@ -53,5 +53,7 @@ $ make clean
 
 <hr>
 
+> You can find detailed information on how each and every function implemented works inside the corresponding header files.
+
 <a href="mailto:sdi1600263@di.uoa.gr">👩 Dimitra Kousta</a>, <a href="mailto:sdi1500201@di.uoa.gr">🧔 Andrew Pappas</a> <br>
 :copyright: 2020 - 2021, All Rights Reserved.
