@@ -4,6 +4,6 @@
 
 int main(void)
 {
-  test_print();
+  
   return 0;
 }
