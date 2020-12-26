@@ -49,7 +49,7 @@ int HT_InsertEntry(HT_info *, Record); //calls hash function to calculate key, t
 int HT_DeleteEntry(HT_info , void *);  //eliminates record
 
 
-int HT_GetAllEntries(HT_info , void *);  //call hash function to alculate key and then print each record for this key
+int HT_GetAllEntries(HT_info , void *);  //call hash function to calculate key and then print each record for this key
 
 
 
