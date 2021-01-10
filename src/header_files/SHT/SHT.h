@@ -17,7 +17,7 @@ typedef struct
   char *attrName;
   int attrLength;
   long int numBuckets;
-  char *fileName  
+  char *fileName;  
 } SHT_info;
 
 typedef struct 
@@ -31,8 +31,14 @@ typedef struct
   char maxRecords;   //char instead of int to save space
   int nextBlock;    //fileDescriptor
   char currRecords;
-  Record records[ 512 / (  sizeof(Record) - 2*sizeof(char) - sizeof(int) ) ];
+  SecondaryRecord records[ 512 / (  sizeof(SecondaryRecord) - 2*sizeof(char) - sizeof(int) ) ];
 }SecondaryBlock;
+
+typedef struct
+{
+  char *surname;
+  Block *HT_pointer;
+}Pointer_Record;
 
 int SHT_CreateSecondaryIndex(char *, char*, int, int, char *);
 
@@ -40,12 +46,10 @@ SHT_info* SHT_OpenSecondaryIndex(char *);
 
 int SHT_CloseSecondaryIndex(SHT_info *);
 
-int SHT_SecondaryInsertEntry(SHT_info, SecondaryRecord);
+int SHT_SecondaryInsertEntry(SHT_info *, SecondaryRecord);
 
 int SHT_SecondaryGetAllEntries(SHT_info, HT_info, void *);
 
-int hashfunction(char, int, void *);
-
-void InsertEntries(SHT_info *);   //reads file and calls InsertEntry for each line to create new record
+int hashfunction_char(int, void *);
 
 #endif /* SHT_H */
