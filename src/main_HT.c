@@ -23,9 +23,10 @@ int main(void)
 
     InsertEntries(info);
 
-    int value = 4;
+    //int value = NULL;
+    int id = 50;
     int blocks_read;
-    if ((blocks_read = HT_GetAllEntries(*info, &value)) < 0)
+    if ((blocks_read = HT_GetAllEntries(*info, &id)) < 0)
     {
         fprintf(stderr, "[!] Error in getting all the entries in main()\n");
         return -1;

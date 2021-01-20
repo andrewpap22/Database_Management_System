@@ -8,13 +8,13 @@
 int HT_CreateIndex(char *fileName, char attrType, char *attrName, int attrLength, int buckets)
 {
     HT_info info;
-    void *first_block;   //first block holds info
+    void *first_block; //first block holds info
 
     info.attrLength = attrLength;
     info.attrName = attrName;
     info.attrType = attrType;
     info.buckets = buckets;
-    
+
     if (BF_CreateFile(fileName) < 0)
     {
         BF_PrintError("[!] Error in creating the file in HT_CreateFile");
@@ -60,11 +60,11 @@ int HT_CreateIndex(char *fileName, char attrType, char *attrName, int attrLength
 
     void *new_page;
     Block new_block;
-    new_block.maxRecords = 512 / (  sizeof(Record) - 2*sizeof(char) - sizeof(int) );
+    new_block.maxRecords = 512 / (sizeof(Record) - 2 * sizeof(char) - sizeof(int));
     new_block.currRecords = 0;
     new_block.nextBlock = -1;
 
-    for(int i = 1; i <= buckets; i++)
+    for (int i = 1; i <= buckets; i++)
     {
 
         if ((info.fileDesc = BF_OpenFile(fileName)) < 0)
@@ -129,7 +129,6 @@ HT_info *HT_OpenIndex(char *fileName)
     memcpy(info, block, sizeof(HT_info));
 
     return info;
-
 }
 
 int HT_CloseIndex(HT_info *header_info)
@@ -150,21 +149,21 @@ int HT_InsertEntry(HT_info *header_info, Record record)
     void *page;
     Block block;
 
-    if (BF_ReadBlock(header_info->fileDesc, key, &page) < 0)  //first page for this key
+    if (BF_ReadBlock(header_info->fileDesc, key, &page) < 0) //first page for this key
     {
-        BF_PrintError("[!] Error in reading the block in HT_CreateFile");
+        BF_PrintError("[!] Error in reading the block in HT_InsertEntry");
         BF_CloseFile(header_info->fileDesc);
         return -1;
     }
 
     memcpy(&block, page, sizeof(Block));
 
-    while(block.nextBlock != -1)  //check if there is a chain of blocks and get to the last one
+    while (block.nextBlock != -1) //check if there is a chain of blocks and get to the last one
     {
         key = block.nextBlock;
         if (BF_ReadBlock(header_info->fileDesc, key, &page) < 0)
         {
-            BF_PrintError("[!] Error in reading the block in HT_CreateFile");
+            BF_PrintError("[!] Error in reading the block in HT_InsertEntry");
             BF_CloseFile(header_info->fileDesc);
             return -1;
         }
@@ -172,11 +171,11 @@ int HT_InsertEntry(HT_info *header_info, Record record)
         memcpy(&block, page, sizeof(Block));
     }
 
-    if(block.maxRecords == block.currRecords)   //block is full
+    if (block.maxRecords == block.currRecords) //block is full
     {
         void *new_page;
         Block new_block;
-        new_block.maxRecords = 512 / (  sizeof(Record) - 2*sizeof(char) - sizeof(int) );
+        new_block.maxRecords = 512 / (sizeof(Record) - 2 * sizeof(char) - sizeof(int));
         new_block.currRecords = 0;
         new_block.nextBlock = -1;
         new_block.records[0] = record;
@@ -196,21 +195,20 @@ int HT_InsertEntry(HT_info *header_info, Record record)
 
         if (BF_WriteBlock(header_info->fileDesc, key) < 0)
         {
-            BF_PrintError("[!] Error in writing block in HT_CreateFile");
+            BF_PrintError("[!] Error in writing block in HT_InsertEntry");
             BF_CloseFile(header_info->fileDesc);
             return -1;
         }
 
-
         if (BF_AllocateBlock(header_info->fileDesc) < 0)
         {
-            BF_PrintError("[!] Error in allocating the block in HT_CreateFile");
+            BF_PrintError("[!] Error in allocating the block in HT_InsertEntry");
             BF_CloseFile(header_info->fileDesc);
             return -1;
         }
         if (BF_ReadBlock(header_info->fileDesc, num_blocks, &new_page) < 0)
         {
-            BF_PrintError("[!] Error in reading the block in HT_CreateFile");
+            BF_PrintError("[!] Error in reading the block in HT_InsertEntry");
             BF_CloseFile(header_info->fileDesc);
             return -1;
         }
@@ -219,13 +217,12 @@ int HT_InsertEntry(HT_info *header_info, Record record)
 
         if (BF_WriteBlock(header_info->fileDesc, num_blocks) < 0)
         {
-            BF_PrintError("[!] Error in writing block in HT_CreateFile");
+            BF_PrintError("[!] Error in writing block in HT_InsertEntry");
             BF_CloseFile(header_info->fileDesc);
             return -1;
         }
-
     }
-    else   //block has space left to save new record
+    else //block has space left to save new record
     {
         block.records[block.currRecords] = record;
         block.currRecords++;
@@ -234,34 +231,34 @@ int HT_InsertEntry(HT_info *header_info, Record record)
 
         if (BF_WriteBlock(header_info->fileDesc, key) < 0)
         {
-            BF_PrintError("[!] Error in writing block in HT_CreateFile");
+            BF_PrintError("[!] Error in writing block in HT_InsertEntry");
             BF_CloseFile(header_info->fileDesc);
             return -1;
         }
     }
 
-    return 0;
+    return key;
 }
 
-int hashfunction(char attrType, int numBuckets, void* value)
+int hashfunction(char attrType, int numBuckets, void *value)
 {
     int a = 678, b = 345, p = 100019;
 
     if (attrType == 'c')
     {
         int hashedId = 0;
-        char* str = (char*)value;
+        char *str = (char *)value;
         while (str[0] != '\0')
         {
 
             hashedId = (hashedId * a + str[0]) % p;
             str++;
         }
-        return (hashedId % numBuckets) + 1;   //+1 to avoid having 0 as bucket number (as it is the info bucket)
+        return (hashedId % numBuckets) + 1; //+1 to avoid having 0 as bucket number (as it is the info bucket)
     }
     else if (attrType == 'i')
     {
-        int* id = (int*)value;
+        int *id = (int *)value;
         return (((a * b + (*id)) % p) % numBuckets) + 1;
     }
     else
@@ -273,14 +270,14 @@ int hashfunction(char attrType, int numBuckets, void* value)
 int HT_GetAllEntries(HT_info info, void *value)
 {
     int key = hashfunction(info.attrType, info.buckets, value);
-    void* page;
+    void *page;
     Block block;
 
     int blocks_read = 0;
 
-    if (BF_ReadBlock(info.fileDesc, key, &page) < 0)   //first page for this key
+    if (BF_ReadBlock(info.fileDesc, key, &page) < 0) //first page for this key
     {
-        BF_PrintError("[!] Error in reading the block in HT_CreateFile");
+        BF_PrintError("[!] Error in reading the block in HT_GetAllEntries");
         BF_CloseFile(info.fileDesc);
         return -1;
     }
@@ -289,19 +286,19 @@ int HT_GetAllEntries(HT_info info, void *value)
 
     memcpy(&block, page, sizeof(Block));
 
-    for(int j = 0; j < block.currRecords; j++)   //print records
+    for (int j = 0; j < block.currRecords; j++) //print records
     {
         Record currRecord = block.records[j];
         printf("%d %s %s %s \n", currRecord.id, currRecord.name, currRecord.surname, currRecord.address);
     }
 
-    if(block.nextBlock != -1)   //there are more pages for this key
+    if (block.nextBlock != -1) //there are more pages for this key
     {
-        while(block.nextBlock != -1)  //until the last linked page
+        while (block.nextBlock != -1) //until the last linked page
         {
             if (BF_ReadBlock(info.fileDesc, block.nextBlock, &page) < 0)
             {
-                BF_PrintError("[!] Error in reading the block in HT_CreateFile");
+                BF_PrintError("[!] Error in reading the block in HT_GetAllEntries");
                 BF_CloseFile(info.fileDesc);
                 return -1;
             }
@@ -310,7 +307,7 @@ int HT_GetAllEntries(HT_info info, void *value)
 
             memcpy(&block, page, sizeof(Block));
 
-            for(int j = 0; j < block.currRecords; j++)
+            for (int j = 0; j < block.currRecords; j++)
             {
                 Record currRecord = block.records[j];
                 printf("%d %s %s %s \n", currRecord.id, currRecord.name, currRecord.surname, currRecord.address);
@@ -341,22 +338,22 @@ int HashStatistics(char *fileName)
 
     memcpy(info, first_block, sizeof(HT_info));
 
-    int num_blocks=0; //holds the number of blocks of the file;
+    int num_blocks = 0; //holds the number of blocks of the file;
     int min_records;
     int max_records;
     int average_records;
-    int overload_buckets=0;
+    int overload_buckets = 0;
     int overload[info->buckets];
     memset(overload, 0, info->buckets);
 
-    for(int i = 1; i <= info->buckets; i++)   //for each bucket
+    for (int i = 1; i <= info->buckets; i++) //for each bucket
     {
         Block block;
-        void* page;
+        void *page;
 
         if (BF_ReadBlock(info->fileDesc, i, &page) < 0)
         {
-            BF_PrintError("[!] Error in reading the block in HT_CreateFile");
+            BF_PrintError("[!] Error in reading the block in HashStatistics");
             BF_CloseFile(info->fileDesc);
             return -1;
         }
@@ -368,16 +365,16 @@ int HashStatistics(char *fileName)
         min_records = block.currRecords;
         max_records = block.currRecords;
         average_records = block.currRecords;
-        int j=1;
+        int j = 1;
 
-        while(block.nextBlock != -1)  //more blocks linked
+        while (block.nextBlock != -1) //more blocks linked
         {
             overload_buckets++;
             j++; //holds the number of blocks per bucket;
 
             if (BF_ReadBlock(info->fileDesc, block.nextBlock, &page) < 0)
             {
-                BF_PrintError("[!] Error in reading the block in HT_CreateFile");
+                BF_PrintError("[!] Error in reading the block in HashStatistics");
                 BF_CloseFile(info->fileDesc);
                 return -1;
             }
@@ -386,11 +383,11 @@ int HashStatistics(char *fileName)
 
             memcpy(&block, page, sizeof(Block));
 
-            if(block.currRecords > max_records)
+            if (block.currRecords > max_records)
             {
                 max_records = block.currRecords;
             }
-            else if(block.currRecords < min_records)
+            else if (block.currRecords < min_records)
             {
                 min_records = block.currRecords;
             }
@@ -398,24 +395,24 @@ int HashStatistics(char *fileName)
             average_records += block.currRecords;
         }
 
-        overload[i-1] = overload_buckets;
+        overload[i - 1] = overload_buckets;
 
-        average_records = average_records/j;
+        average_records = average_records / j;
 
         printf("Bucket number %d has max number of records = %d, min number of records = %d and an average number of %d records\n", i, max_records, min_records, average_records);
     }
 
     printf("File %s has %d blocks\n", fileName, num_blocks);
 
-    int average_blocks = num_blocks/info->buckets;
+    int average_blocks = num_blocks / info->buckets;
     printf("The average number of blocks is %d\n", average_blocks);
 
     printf("There are %d overload buckets:\n", overload_buckets);
-    for(int k=0; k < info->buckets; k++)
+    for (int k = 0; k < info->buckets; k++)
     {
-        if(overload[k] != 0)
+        if (overload[k] != 0)
         {
-            printf("bucket number %d has %d blocks\n", k+1, overload[k]);
+            printf("bucket number %d has %d blocks\n", k + 1, overload[k]);
         }
     }
 
@@ -432,13 +429,13 @@ int HT_DeleteEntry(HT_info info, void *value)
 {
     int key = hashfunction(info.attrType, info.buckets, &value);
 
-    void* page;
+    void *page;
     Block block;
     Record currRecord;
 
-    if (BF_ReadBlock(info.fileDesc, key, &page) < 0)   //first page for this key
+    if (BF_ReadBlock(info.fileDesc, key, &page) < 0) //first page for this key
     {
-        BF_PrintError("[!] Error in reading the block in HT_CreateFile");
+        BF_PrintError("[!] Error in reading the block in HT_DeleteEntry");
         BF_CloseFile(info.fileDesc);
         return -1;
     }
@@ -446,13 +443,13 @@ int HT_DeleteEntry(HT_info info, void *value)
     memcpy(&block, page, sizeof(Block));
 
     int i = 0;
-    while(i <= block.currRecords)
+    while (i <= block.currRecords)
     {
         currRecord = block.records[i];
-        if(currRecord.id == (int)value || currRecord.id == (char)value)
+        if (currRecord.id == (int)value || currRecord.id == (char)value)
         {
-            memset(&block.records[i], 0, sizeof(Record));  //delete item from array
-//            block.currRecords--;
+            memset(&block.records[i], 0, sizeof(Record)); //delete item from array
+                                                          //            block.currRecords--;
             return 0;
         }
 
@@ -461,13 +458,13 @@ int HT_DeleteEntry(HT_info info, void *value)
 
     //if this place is reached then the item is not found yet
 
-    if(block.nextBlock != -1)   //there are more pages for this key
+    if (block.nextBlock != -1) //there are more pages for this key
     {
-        while(block.nextBlock != -1)  //until the last linked page
+        while (block.nextBlock != -1) //until the last linked page
         {
             if (BF_ReadBlock(info.fileDesc, block.nextBlock, &page) < 0)
             {
-                BF_PrintError("[!] Error in reading the block in HT_CreateFile");
+                BF_PrintError("[!] Error in reading the block in HT_DeleteEntry");
                 BF_CloseFile(info.fileDesc);
                 return -1;
             }
@@ -475,19 +472,18 @@ int HT_DeleteEntry(HT_info info, void *value)
             memcpy(&block, page, sizeof(Block));
 
             i = 0;
-            while(i <= block.currRecords)
+            while (i <= block.currRecords)
             {
                 currRecord = block.records[i];
-                if(currRecord.id == (int)value || currRecord.id == (char)value)
+                if (currRecord.id == (int)value || currRecord.id == (char)value)
                 {
-                    memset(&block.records[i], 0, sizeof(Record));   //delete item from array
-//                    block.currRecords--;
+                    memset(&block.records[i], 0, sizeof(Record)); //delete item from array
+                                                                  //                    block.currRecords--;
                     return 0;
                 }
 
                 i++;
             }
-
         }
     }
 
@@ -495,7 +491,6 @@ int HT_DeleteEntry(HT_info info, void *value)
     printf("Item to be deleted does not exist\n");
     return 0;
 }
-
 
 void InsertEntries(HT_info *info)
 {
@@ -505,6 +500,7 @@ void InsertEntries(HT_info *info)
     ssize_t read; // size type with an error value (-1)
     FP = stdin;
     Record record;
+    int id;
 
     while ((read = getline(&line, &length, FP)) != -1)
     {
@@ -532,10 +528,9 @@ void InsertEntries(HT_info *info)
 
         line--;
 
-        assert(!HT_InsertEntry(info, record));
+        //assert(!HT_InsertEntry(info, record));
+
+        id = HT_InsertEntry(info, record);
     }
     free(line);
 }
-
-
-

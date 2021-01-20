@@ -103,14 +103,14 @@
 <hr>
 
 ### Compilation: 
-> Go inside the Makefiles Directory and then for each of the HT or HP compile with: 
+> Go inside the Makefiles Directory and then for each of the HT or HP or SHT compile with: 
 
 ```bash
 $ make
 ```
 
 ### Execution:
-> Go inside the Makefiles Directory and then for each of the HT or HP run with:
+> Go inside the Makefiles Directory and then for each of the HT or HP or SHT run with:
 
 ```bash
 $ make run  
